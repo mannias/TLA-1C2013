@@ -4,23 +4,20 @@
 int varindex(char* name);
 %}
 
-vartype "int"|"char"|"string"|"float"|"boolean"
-retype {vartype}|"void"
-cycletype "if"|"while"
 
 %%
-vartype							{yylval.type = strdup(yytext); return VARTYPE;}
-retype							{yylval.type = strdup(yytext); return RETYPE;}
+"int"							{yylval.type = strdup(yytext); return VARTYPE;}
 "=="							{return EQQ;}
 "!="							{return NEQ;}
 "&"								{return MILL;}
-cycletype						{yylval.type = strdup(yytext); return CYCLE;}
+"if"						    {yylval.type = strdup(yytext); return IF;}
+"while"							{yylval.type = strdup(yytext); return WHILE;}
 "return"						{return RETURN;}
 "++"							{return SUMM;}
 "--"							{return LESS;}
 [ \t]+							/* ignorar espacios */;
 \n 								/* ignorar saltos de linea */;
-[A-Z|a-z][A-Z|a-z|0-9]*			{yylval.num = varindex(yytext); return NAME;}
+[A-Z|a-z][a-z|0-9]*					{yylval.num = varindex(yytext); return NAME;}
 [0-9]+ 							{yylval.num = atoi(yytext); return NUMBER;}
 .								{return yytext[0];}
 

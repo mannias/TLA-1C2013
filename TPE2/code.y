@@ -9,13 +9,13 @@ char* vars[NVARS];
 int vals[NVARS];
 int nvars = 0;
 %}
-
+%error-verbose
 %union{
 	char* type;
 	int num;
 }
-%token NAME EQQ SUMM NUMBER NEQ RETURN LESS MILL VARTYPE RETYPE CYCLE
-%type <type> VARTYPE RETYPE CYCLE
+%token NAME EQQ SUMM NUMBER NEQ RETURN LESS MILL VARTYPE IF WHILE
+%type <type> VARTYPE IF WHILE
 %type <num> NUMBER NAME expression condition
 %start head
 
@@ -26,15 +26,19 @@ head:	vtype vname bopen variables bclose open body return close {printf("test\n"
 
 body:   body assignation
 	  |	body loop statements
+	  | body simpleop
 	  | assignation
 	  | loop statements
+	  | simpleop
 	  ;
 
-return:   RETURN NAME { printf("return %s\n", vars[$2]);}
-		| RETURN NUMBER {printf("return %d\n", $2);}
+return:   RETURN NAME { printf("return %s;\n", vars[$2]);}
+		| RETURN NUMBER {printf("return %d;\n", $2);}
 		;
 
-assignation : 	NAME '=' expression {printf("%s = %d", vars[$1], $3);}
+assignation : 	  NAME '=' expression {printf("%s = %d;\n", vars[$1], $3); vals[$1] = $3;}
+				| VARTYPE NAME '=' expression {printf("%s %s = %d;\n", $1, vars[$2], $4); vals[$2] = $4;}
+				| VARTYPE NAME {printf("%s %s;\n", $1, vars[$2]);}
 				;
 
 expression:   '(' expression '+' expression ')' {$$ = $2 + $4;}
@@ -53,10 +57,16 @@ condition:   '(' expression EQQ expression ')' { $$ = ($2 == $4); }
            | '(' expression NEQ expression ')' { $$ = ($2 == $4); }
            ;
 
-loop:	  CYCLE condition    	{printf("%s(%d)", $1, $2);}
+loop:	  IF condition    	{printf("if(%d)", $2);}
+		| WHILE condition	{printf("while(%d)", $2);}
+
+simpleop:	  NAME SUMM {printf("%s++;", vars[$1]);}
+			| NAME LESS {printf("%s--;", vars[$1]);}
+			;
 
 variables:	  VARTYPE NAME     {printf("%s %s\n", $1, vars[$2]);}
 			| VARTYPE NAME ',' {printf("%s %s, ", $1, vars[$2]);}
+			| {/* sin vars */}
 			;
 
 statements: 	open body close
@@ -74,10 +84,10 @@ bopen: 	'('		{printf("(");}
 bclose:	')'		{printf(")");}
 		;
  
-vtype: 	RETYPE {printf("%s", $1);}
+vtype: 	VARTYPE {printf("%s ", $1);}
 		;
 
-vname: 	NAME {printf("%s", vars[$1]);}
+vname: 	NAME {printf("%s ", vars[$1]);}
 		;
 
 %%

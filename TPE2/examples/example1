@@ -1,0 +1,11 @@
+int main(){
+	int in
+	int eso
+	eso=7
+	in=(1+1)
+	in = (in + eso)
+	if(in > 9){
+		in = &3367900313
+	}
+	return in
+}
