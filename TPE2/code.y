@@ -1,47 +1,85 @@
 %{
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <inttypes.h>
 #define NVARS 100
 char* vars[NVARS];
 int vals[NVARS];
 int nvars = 0;
 %}
 
-%token NAME
+%union{
+	char* type;
+	int num;
+}
+%token NAME EQQ SUMM NUMBER NEQ RETURN LESS MILL VARTYPE RETYPE CYCLE
+%type <type> VARTYPE RETYPE CYCLE
+%type <num> NUMBER NAME expression condition
+%start head
+
 
 %%
-
-head: VARTYPE NAME '(' variables ')' '{' body return '}' { printf("%d\n", $8);}
+head:	vtype vname bopen variables bclose open body return close {printf("test\n");}
+		;
 
 body:   body assignation
-	  |	body loop
+	  |	body loop statements
+	  | assignation
+	  | loop statements
+	  ;
 
-return:   RETURN NAME { $$ = vars[$2];}
-		| RETURN NUMBER {$$ = $1;}
+return:   RETURN NAME { printf("return %s\n", vars[$2]);}
+		| RETURN NUMBER {printf("return %d\n", $2);}
+		;
 
-assignation : NAME '=' expression {printf("%s = %d", $1, $3);}
+assignation : 	NAME '=' expression {printf("%s = %d", vars[$1], $3);}
+				;
 
-expression:   '(' expression '+' expression ')' {$$ = $1 + $2;}
-			| '(' expression '-' expression ')' {$$ = $1 - $2;}
-			| '(' expression '/' expression ')' {$$ = $1 / $2;}
-			| '(' expression '*' expression ')' {$$ = $1 * $2;}
-			| '(' expression '%' expression ')' {$$ = $1 % $2;}
+expression:   '(' expression '+' expression ')' {$$ = $2 + $4;}
+			| '(' expression '-' expression ')' {$$ = $2 - $4;}
+			| '(' expression '/' expression ')' {$$ = $2 / $4;}
+			| '(' expression '*' expression ')' {$$ = $2 * $4;}
+			| '(' expression '%' expression ')' {$$ = $2 % $4;}
 			| MILL expression					{$$ = miller_rabin($2);}
 			| NUMBER 							{$$ = $1;}
-			| NAME								{$$ = vars[$1]}
+			| NAME								{$$ = vals[$1];}
+			;
 
-condition:   '(' expression EQQ expression ')' { $$ = ($1 == $3); }
-  	 	   | '(' expression '>' expression ')' { $$ = ($1 > $3); }
-           | '(' expression '<' expression ')' { $$ = ($1 < $3); }
-           | '(' expression NEQ expression ')' { $$ = ($1 == $3); }
+condition:   '(' expression EQQ expression ')' { $$ = ($2 == $4); }
+  	 	   | '(' expression '>' expression ')' { $$ = ($2 > $4); }
+           | '(' expression '<' expression ')' { $$ = ($2 < $4); }
+           | '(' expression NEQ expression ')' { $$ = ($2 == $4); }
+           ;
 
-simpleop: 	  NAME SUMM {$$ = vars[$1]+1;}
-			| NAME LESS {$$ = vars[$1]-1;}
+loop:	  CYCLE condition    	{printf("%s(%d)", $1, $2);}
 
-loop:	  IF condition '{' body '}'
-		| WHILE condition '{' body '}'
-		| FOR '('assignation ';' condition ';' simpleop ')''{' body '}'
+variables:	  VARTYPE NAME     {printf("%s %s\n", $1, vars[$2]);}
+			| VARTYPE NAME ',' {printf("%s %s, ", $1, vars[$2]);}
+			;
 
-variables	  VARTYPE NAME {printf("%s %s;\n", $1, $2);}
+statements: 	open body close
+				;
+
+open:	'{' 	{printf("{\n");}
+		;
+
+close:	'}'		{printf("}\n");}
+		;
+
+bopen: 	'('		{printf("(");}
+		;
+
+bclose:	')'		{printf(")");}
+		;
+ 
+vtype: 	RETYPE {printf("%s", $1);}
+		;
+
+vname: 	NAME {printf("%s", vars[$1]);}
+		;
+
 %%
 
 int varindex(char *var)
@@ -88,3 +126,14 @@ int miller_rabin(uint32_t n)
   );
   return sizeof a / sizeof a[0] == i || a[i] >= n;
 }
+
+int yywrap()
+{
+        return 1;
+} 
+  
+main()
+{
+	printf("#include <stdio.h>\n");
+    yyparse();
+} 
