@@ -4,9 +4,8 @@ TEXT = FUNCION(PEPE)
 TEXT = 5 + 5
 TEXT = 5
 IF(5 == 5){
-TEXT = 5
-}
 WHILE(5 == 5){
 TEXT = 5
+}
 }
 }
