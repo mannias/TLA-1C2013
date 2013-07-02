@@ -1,11 +1,19 @@
+int esoe(int pepe){
+	int lala = 1
+	return lala
+}
+
 int main(){
 	int in
 	int eso
+	char a = getc()
 	eso=7
+	esoe(eso)
 	in=(1+1)
 	in = (in + eso)
-	if(in > 9){
+	if(in > 7){
 		in = &3367900313
 	}
+	print in
 	return in
 }

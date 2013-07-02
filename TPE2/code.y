@@ -14,29 +14,50 @@ int nvars = 0;
 	char* type;
 	int num;
 }
-%token NAME EQQ SUMM NUMBER NEQ RETURN LESS MILL VARTYPE IF WHILE
+%token NAME EQQ SUMM NUMBER NEQ RETURN LESS MILL VARTYPE IF WHILE PRINT GETC
 %type <type> VARTYPE IF WHILE
 %type <num> NUMBER NAME expression condition
 %start head
 
 
 %%
-head:	vtype vname bopen variables bclose open body return close {printf("test\n");}
+head:	  head header
+		| header
+		;
+
+header: vtype vname bopen variables bclose open body return close
 		;
 
 body:   body assignation
 	  |	body loop statements
 	  | body simpleop
+	  |	body function
+	  | body print
+	  | print
+	  | function
 	  | assignation
 	  | loop statements
 	  | simpleop
 	  ;
+
+
+print: 	PRINT NAME {printf("printf(\"%%d\",%s);\n", vars[$2]);}
+		;	  
+
+function:   vname bopen arguments bclose {printf(";\n");}
+			;
+
+arguments: 	  vname coma arguments
+			| vname
+			;
 
 return:   RETURN NAME { printf("return %s;\n", vars[$2]);}
 		| RETURN NUMBER {printf("return %d;\n", $2);}
 		;
 
 assignation : 	  NAME '=' expression {printf("%s = %d;\n", vars[$1], $3); vals[$1] = $3;}
+				| NAME '=' GETC '(' ')' {printf("%s = getchar();\n", vars[$1]);} 
+				| VARTYPE NAME '=' GETC '(' ')' {printf("%s %s = getchar();\n", $1, vars[$2]);} 
 				| VARTYPE NAME '=' expression {printf("%s %s = %d;\n", $1, vars[$2], $4); vals[$2] = $4;}
 				| VARTYPE NAME {printf("%s %s;\n", $1, vars[$2]);}
 				;
@@ -64,8 +85,8 @@ simpleop:	  NAME SUMM {printf("%s++;", vars[$1]);}
 			| NAME LESS {printf("%s--;", vars[$1]);}
 			;
 
-variables:	  VARTYPE NAME     {printf("%s %s\n", $1, vars[$2]);}
-			| VARTYPE NAME ',' {printf("%s %s, ", $1, vars[$2]);}
+variables:	  vtype vname     
+			| vtype vname coma variables
 			| {/* sin vars */}
 			;
 
@@ -90,6 +111,7 @@ vtype: 	VARTYPE {printf("%s ", $1);}
 vname: 	NAME {printf("%s ", vars[$1]);}
 		;
 
+coma:   ',' {printf(",");}
 %%
 
 int varindex(char *var)
@@ -129,11 +151,7 @@ int miller_rabin(uint32_t n)
 {
   static const uint32_t a[] = { 2, 3, 5, 7, 11, 13 };
   unsigned i = 0;
-  while (
-    i < sizeof a / sizeof a[0] &&
-    a[i] < n &&
-    1 == millertime(a[i++], n - 1, n)
-  );
+  while ( i < sizeof a / sizeof a[0] && a[i] < n && 1 == millertime(a[i++], n - 1, n));
   return sizeof a / sizeof a[0] == i || a[i] >= n;
 }
 
